@@ -1,0 +1,56 @@
+server:
+  port: ${SERVER_PORT:8080}
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3307/order_db?createDatabaseIfNotExist=true&serverTimezone=UTC}
+    username: ${DB_USER:app}
+    password: ${DB_PASSWORD:app_password}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate.jdbc.time_zone: UTC
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+demo:
+  enabled: ${DEMO_ENABLED:true}
+
+services:
+  payment:
+    url: ${PAYMENT_URL:http://localhost:8081}
+  inventory:
+    url: ${INVENTORY_URL:http://localhost:8082}
+  shipping:
+    url: ${SHIPPING_URL:http://localhost:8083}
+spring.cloud.openfeign:
+  client:
+    config:
+      default:
+        connectTimeout: 1000
+        readTimeout: 2000
+  circuitbreaker:
+    enabled: false
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 1500ms
+        waitDurationInOpenState: 10s
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+saga:
+  recovery-delay-ms: 5000
+  stale-after-seconds: 120

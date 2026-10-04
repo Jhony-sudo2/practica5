@@ -1,0 +1,160 @@
+name: saga-poc
+services:
+  order-db:
+    image: mysql:8.0.43
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: order_db
+      MYSQL_USER: ${DB_USER:-app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-app_password}
+    ports:
+    - 127.0.0.1:3307:3306
+    volumes:
+    - order_data:/var/lib/mysql
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - mysqladmin ping -h 127.0.0.1 -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+  order-service:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    environment:
+      SERVER_PORT: '8080'
+      DB_URL: jdbc:mysql://order-db:3306/order_db?serverTimezone=UTC
+      DB_USER: ${DB_USER:-app}
+      DB_PASSWORD: ${DB_PASSWORD:-app_password}
+      DEMO_ENABLED: ${DEMO_ENABLED:-true}
+      PAYMENT_URL: http://payment-service:8081
+      INVENTORY_URL: http://inventory-service:8082
+      SHIPPING_URL: http://shipping-service:8083
+    ports:
+    - 127.0.0.1:8080:8080
+    depends_on:
+      order-db:
+        condition: service_healthy
+      payment-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+      shipping-service:
+        condition: service_started
+    restart: unless-stopped
+  payment-db:
+    image: mysql:8.0.43
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: payment_db
+      MYSQL_USER: ${DB_USER:-app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-app_password}
+    ports:
+    - 127.0.0.1:3308:3306
+    volumes:
+    - payment_data:/var/lib/mysql
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - mysqladmin ping -h 127.0.0.1 -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+  payment-service:
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
+    environment:
+      SERVER_PORT: '8081'
+      DB_URL: jdbc:mysql://payment-db:3306/payment_db?serverTimezone=UTC
+      DB_USER: ${DB_USER:-app}
+      DB_PASSWORD: ${DB_PASSWORD:-app_password}
+      DEMO_ENABLED: ${DEMO_ENABLED:-true}
+    ports:
+    - 127.0.0.1:8081:8081
+    depends_on:
+      payment-db:
+        condition: service_healthy
+    restart: unless-stopped
+  inventory-db:
+    image: mysql:8.0.43
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: inventory_db
+      MYSQL_USER: ${DB_USER:-app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-app_password}
+    ports:
+    - 127.0.0.1:3309:3306
+    volumes:
+    - inventory_data:/var/lib/mysql
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - mysqladmin ping -h 127.0.0.1 -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+  inventory-service:
+    build:
+      context: .
+      dockerfile: inventory-service/Dockerfile
+    environment:
+      SERVER_PORT: '8082'
+      DB_URL: jdbc:mysql://inventory-db:3306/inventory_db?serverTimezone=UTC
+      DB_USER: ${DB_USER:-app}
+      DB_PASSWORD: ${DB_PASSWORD:-app_password}
+      DEMO_ENABLED: ${DEMO_ENABLED:-true}
+    ports:
+    - 127.0.0.1:8082:8082
+    depends_on:
+      inventory-db:
+        condition: service_healthy
+    restart: unless-stopped
+  shipping-db:
+    image: mysql:8.0.43
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: shipping_db
+      MYSQL_USER: ${DB_USER:-app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-app_password}
+    ports:
+    - 127.0.0.1:3310:3306
+    volumes:
+    - shipping_data:/var/lib/mysql
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - mysqladmin ping -h 127.0.0.1 -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+  shipping-service:
+    build:
+      context: .
+      dockerfile: shipping-service/Dockerfile
+    environment:
+      SERVER_PORT: '8083'
+      DB_URL: jdbc:mysql://shipping-db:3306/shipping_db?serverTimezone=UTC
+      DB_USER: ${DB_USER:-app}
+      DB_PASSWORD: ${DB_PASSWORD:-app_password}
+      DEMO_ENABLED: ${DEMO_ENABLED:-true}
+    ports:
+    - 127.0.0.1:8083:8083
+    depends_on:
+      shipping-db:
+        condition: service_healthy
+    restart: unless-stopped
+volumes:
+  order_data: {}
+  payment_data: {}
+  inventory_data: {}
+  shipping_data: {}

@@ -1,0 +1,7 @@
+**/target/
+.env
+.test-db/
+.test-logs/
+evidence/
+.idea/
+.vscode/

@@ -1,0 +1,6 @@
+**/target
+.git
+.env
+.test-db
+.test-logs
+evidence
